@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.3.2">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2023-07-15T23:05:19+02:00</updated><id>http://localhost:4000/feed.xml</id><title type="html">TopoToy Games</title><subtitle>This is a coding blog where I post now and then about the various projects that I am currently working on, both at work, or as an independent researcher. Most content here revolves around computer graphics and physics simulation.</subtitle><entry><title type="html">Truncated SVD</title><link href="http://localhost:4000/math/2d/coding/2023/07/05/truncated-svd.html" rel="alternate" type="text/html" title="Truncated SVD" /><published>2023-07-05T22:52:40+02:00</published><updated>2023-07-05T22:52:40+02:00</updated><id>http://localhost:4000/math/2d/coding/2023/07/05/truncated-svd</id><content type="html" xml:base="http://localhost:4000/math/2d/coding/2023/07/05/truncated-svd.html"><![CDATA[<p>NOTE: This write-up is not finished yet…</p>
+
+<h3 id="pca">PCA</h3>
+
+<p>https://en.wikipedia.org/wiki/Principal_component_analysis</p>
+
+<p>This is accomplished by linearly transforming the data into a new coordinate system where (most of) the variation in the data can be described with fewer dimensions than the initial data.</p>
+
+<p>Without getting into the details, this is done via an eigen-decomposition of the <a href="https://en.wikipedia.org/wiki/Covariance_matrix">covariance matrix</a>.</p>
+
+<p><img src="/uploads/2023/chemaguerra-pca.gif" width="600" height="240" alt="" /></p>
+
+<h3 id="svd">SVD</h3>
+
+<p><em>Singular Value Decomposition</em> (<a href="https://en.wikipedia.org/wiki/Singular_value_decomposition">SVD</a>) is a matrix factorization technique that factors a real matrix <code class="language-plaintext highlighter-rouge">M</code> into three matrices <code class="language-plaintext highlighter-rouge">U</code>, <code class="language-plaintext highlighter-rouge">Σ</code>, and <code class="language-plaintext highlighter-rouge">V</code> such that <code class="language-plaintext highlighter-rouge">M=U*Σ*V_T</code>.</p>
+
+<p>If <code class="language-plaintext highlighter-rouge">M</code> is <code class="language-plaintext highlighter-rouge">mxn</code>, then <code class="language-plaintext highlighter-rouge">U</code> is <code class="language-plaintext highlighter-rouge">mxm</code>, <code class="language-plaintext highlighter-rouge">Σ</code> is <code class="language-plaintext highlighter-rouge">mxn</code> and <code class="language-plaintext highlighter-rouge">V</code> is <code class="language-plaintext highlighter-rouge">nxn</code>. Both <code class="language-plaintext highlighter-rouge">U</code> and <code class="language-plaintext highlighter-rouge">V</code> are orthonormal, and <code class="language-plaintext highlighter-rouge">Σ</code> is rectangular-diagonal with non-negative coefficients.</p>
+
+<p>This is very similar to PCA, excepting that the factorization for SVD is done on the data matrix, whereas for PCA, the factorization is done on the covariance matrix.</p>
+
+<p>The diagonal coefficients of S are known as the <em>singular values</em> of <code class="language-plaintext highlighter-rouge">M</code> and it is common practice to rearrange the SVD so the singular values are given in decreasing order. The number of non-zero singular values is equal to the rank of <code class="language-plaintext highlighter-rouge">M</code>.</p>
+
+<p>The SVD is tightly <a href="https://intoli.com/blog/pca-and-svd/">related to PCA</a>:</p>
+
+<ul>
+  <li>The columns of <code class="language-plaintext highlighter-rouge">V</code> are principal directions/axes (eigenvectors).</li>
+  <li>Columns of <code class="language-plaintext highlighter-rouge">U*Σ</code> are principal components (scores).</li>
+  <li>Singular values are related to the eigenvalues of the covariance matrix.</li>
+</ul>
+
+<p>From Wikipedia:</p>
+
+<p><img src="/uploads/2023/chemaguerra-svd-matrices.png" width="440" height="513" alt="" /></p>
+
+<h3 id="truncated-svd">Truncated SVD</h3>
+
+<p>Let’s try with a 1024x1024 grayscale image of the moon:</p>
+
+<p><img src="/uploads/2023/chemaguerra-moon.png" width="600" height="600" alt="" /></p>
+
+<p>Such an image can be interpreted as 1024 vectors of 1024 components each. <em>i.e.,</em> a set of 1024 vectors in a 1024-dimension space.</p>
+
+<p>If we run PCA/SVD on this set, the three matrices <code class="language-plaintext highlighter-rouge">U</code>, <code class="language-plaintext highlighter-rouge">Σ</code>, <code class="language-plaintext highlighter-rouge">V</code> will be 1024x1024. In particular, <code class="language-plaintext highlighter-rouge">Σ</code> will be a square-diagonal matrix. <em>i.e.,</em> only the coefficients in the diagonal are potentially non-zero. It is common practice to rearrange the three matrices so the diagonal indices in <code class="language-plaintext highlighter-rouge">Σ</code> are sorted from greater (top-left) to lower (bottom-right).</p>
+
+<p><em>Truncated SVD</em> is simply the act of zeroing-out all the coefficients in <code class="language-plaintext highlighter-rouge">Σ</code> except for the top-left <code class="language-plaintext highlighter-rouge">n</code> ones.</p>
+
+<p>Coefficient truncation implies that we’re also trashing <code class="language-plaintext highlighter-rouge">1024-n</code> columns in <code class="language-plaintext highlighter-rouge">U</code> and in <code class="language-plaintext highlighter-rouge">V</code> (as now those will be multiplied by 0 anyway).</p>
+
+<p>If we now reconstruct the original matrix <code class="language-plaintext highlighter-rouge">M'=U'*Σ'*V_T'</code> using the truncated matrices, we will obtain <code class="language-plaintext highlighter-rouge">M'</code>, which will resemble <code class="language-plaintext highlighter-rouge">M</code>. The fewer the coefficients that we drop, the more closely that <code class="language-plaintext highlighter-rouge">M'</code> will approximate <code class="language-plaintext highlighter-rouge">M</code>. But because of the information-preserving properties of PCA/SVD, keeping just a bunch of the topmost coefficients in <code class="language-plaintext highlighter-rouge">Σ</code> may suffice to restore all (or near all) the original information.</p>
+
+<h4 id="here-goes-a-demo">Here goes a demo</h4>
+
+<ul>
+  <li>The left half is the reconstructed matrix <code class="language-plaintext highlighter-rouge">M'</code>.</li>
+  <li>The right half is the reconstruction error <code class="language-plaintext highlighter-rouge">abs(M-M')</code>.</li>
+  <li>The decreasing yellow graph is the MSE as fewer and fewer singular values are zeroed-out.</li>
+</ul>
+
+<p><img src="/uploads/2023/chemaguerra-moon-svd.jpg" width="600" height="300" alt="" /></p>
+
+<p>This screenshot is <code class="language-plaintext highlighter-rouge">M'</code> reconstructed with only 32 (out of 1024) components.  <em>Right click + Open in new tab</em> for 1:1 quality.</p>
+
+<p>Below is a video with the same image pair as more and more components are used for reconstruction. Most of the action happens in the first few frames.</p>
+
+<div class="embed-container">
+    <iframe width="640" height="390" src="https://www.youtube.com/embed/6kzaotZlEWo" frameborder="0" allowfullscreen=""></iframe>
+</div>
+<style>
+.embed-container {
+  position: relative;
+  padding-bottom: 56.25%;
+  height: 0;
+  overflow: hidden;
+  max-width: 100%;
+}
+.embed-container iframe,
+.embed-container object,
+.embed-container embed {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+</style>
+
+<p><br /></p>
+
+<p>What’s remarkable here (the magic of PCA/SVD) is how quickly the error graph decreases. This proves that the first components capture most of the information present in <code class="language-plaintext highlighter-rouge">M</code>, while the trailing components only carry high-frequency/low-amplitude fine details.</p>
+
+<p>This is reminiscent of what happens with the Fourier Transform, the Cosine/Sine Transform and such. Those transforms deal with the space vs. frequency duality, whereas PCA/SVD is purely a variance-driven change-of-basis. But in a similar fashion, all these methods transform information to a dual form where the “amount of information” emerges in a structured, manageable way.</p>
+
+<p>The FT/CT/etc… lie at the foundation of <em>.jpeg</em>, <em>.mp3</em> and other compression systems which exploit the fact that the Human Perception System is more sensitive to luminance (vs. chromaticity), and to lower (vs. higher) frequencies.</p>
+
+<p>In the case of SVD/PCA, the upper coefficients in <code class="language-plaintext highlighter-rouge">Σ</code> capture more data variance than the lower ones.</p>
+
+<p><img src="/uploads/2023/chemaguerra-moon-sequence.png" width="600" height="200" alt="" /></p>
+
+<p>These sequences are reconstructions with 2, 4, 8, 16, 32, 64, and 128 coefficients.</p>
+
+<p><img src="/uploads/2023/chemaguerra-boi-sequence.png" width="600" height="200" alt="" /></p>
+
+<div class="embed-container">
+    <iframe width="640" height="390" src="https://www.youtube.com/embed/dOujW5C-A2A" frameborder="0" allowfullscreen=""></iframe>
+</div>
+<style>
+.embed-container {
+  position: relative;
+  padding-bottom: 56.25%;
+  height: 0;
+  overflow: hidden;
+  max-width: 100%;
+}
+.embed-container iframe,
+.embed-container object,
+.embed-container embed {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+</style>
+
+<p><br /></p>
+
+<h3 id="easier-vs-harder-cases">Easier vs. harder cases</h3>
+
+<p>As explained above, the matrix factorization can be interpreted as a change of basis to a special space where the data has rows which are linearly dependent with each other. In such case, <code class="language-plaintext highlighter-rouge">U/V</code> matrices of a lower rank will suffice to reconstruct the original matrix exactly. Actually, <code class="language-plaintext highlighter-rouge">Σ</code> will present itself with as many zero-valued coefficients in its diagonal as rows/columns can be trashed without causing any loss of data.</p>
+
+<p>An extreme case is presented below (a centered square box shape), where 1 coefficient/row/col suffices. In this case both inside and outside the shape, all rows/cols are identical. A box is a separable convolution filter, BTW (future post on low-rank convolution incoming, I hope).</p>
+
+<p><img src="/uploads/2023/chemaguerra-rect-sequence.png" width="600" height="200" alt="" /></p>
+
+<p>Rotating the shape brings disaster despite PCA/SVD are capable of “auto-detecting” such changes of basis. But here we’re dealing with discrete math, so the rotated shape gets “pixelated” and this makes the decomposition become numerically impure.</p>
+
+<p>It’s funny to see how in the first frames of the video the reconstruction “insists” on being an unrotated square, somehow.</p>
+
+<p><img src="/uploads/2023/chemaguerra-tilt-sequence.png" width="600" height="200" alt="" /></p>
+
+<video controls="controls" playsinline="playsinline" loop="" src="/uploads/2023/chemaguerra-tilt-256.mp4" width="600" height="300" poster="/uploads/2023/chemaguerra-tilt-poster.png" alt="" preload="none"></video>
+
+<p>Below, a pentagonal shape.</p>
+
+<p><img src="/uploads/2023/chemaguerra-penta-sequence.png" width="600" height="200" alt="" /></p>
+
+<video controls="controls" playsinline="playsinline" loop="" src="/uploads/2023/chemaguerra-penta-256.mp4" width="600" height="300" poster="/uploads/2023/chemaguerra-penta-poster.png" alt="" preload="none"></video>
+
+<h3 id="practical-uses">Practical uses</h3>
+
+<p>There are interesting practical uses for SVD truncation other than dimensionality reduction in data analysis.</p>
+
+<h4 id="data-compression">Data compression</h4>
+
+<p><a href="https://bartwronski.com/2020/05/21/dimensionality-reduction-for-image-and-texture-set-compression/">Bart Wronski</a> has a very interesting write up on <em>compression of PBR texture sets</em> using this technique.</p>
+
+<p><em>BCn Texture Compression</em> is based on dimensionality reduction as well. Nice write up on the subject by <a href="https://www.reedbeta.com/blog/understanding-bcn-texture-compression-formats/">Nathan Reed</a>.</p>
+
+<h4 id="low-rank-approximation">Low-rank approximation</h4>
+
+<p>(Low-rank approximation)[https://en.wikipedia.org/wiki/Low-rank_approximation].</p>
+
+<p>Another interesting read by <a href="https://bartwronski.com/2020/02/03/separate-your-filters-svd-and-low-rank-approximation-of-image-filters/">Bart Wronski</a>. I wish to do my own write up on <em>low-rank convolution</em> soon.</p>
+
+<h3 id="implementation-details">Implementation details</h3>
+
+<p>I had some old PCA/SVD C++ code in <a href="https://maverickrender.com/">Maverick</a>’s API, which I used for the images/videos in this post. But after reading this post by <a href="https://blog.demofox.org/2022/07/12/calculating-svd-and-pca-in-c/">Atrix256</a> I may bite the bullet and replace the implementation part of my old <code class="language-plaintext highlighter-rouge">xsvd_c</code> class with <a href="https://eigen.tuxfamily.org/">Eigen</a>.</p>]]></content><author><name></name></author><category term="math" /><category term="2d" /><category term="coding" /><summary type="html"><![CDATA[NOTE: This write-up is not finished yet…]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://brashandplucky.com/thumbnails/2023/chemaguerra-truncated-svd.png" /><media:content medium="image" url="https://brashandplucky.com/thumbnails/2023/chemaguerra-truncated-svd.png" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry><title type="html">Reprojection Temporal Anti-Aliasing</title><link href="http://localhost:4000/render/math/3d/coding/2023/05/06/reprojection-temporal-antialiasing.html" rel="alternate" type="text/html" title="Reprojection Temporal Anti-Aliasing" /><published>2023-05-06T19:46:49+02:00</published><updated>2023-05-06T19:46:49+02:00</updated><id>http://localhost:4000/render/math/3d/coding/2023/05/06/reprojection-temporal-antialiasing</id><content type="html" xml:base="http://localhost:4000/render/math/3d/coding/2023/05/06/reprojection-temporal-antialiasing.html"><![CDATA[<p>Recently I dived into the rabbit-hole of real-time anti-aliasing techniques and ended up implementing <strong>Reprojection-based Temporal Anti-Aliasing</strong>.</p>
+
+<p>Here’s my TAA prototype, in Shadertoy form:</p>
+
+<p><a href="https://www.shadertoy.com/view/ct33WB">Shadertoy: Reprojection Temporal AA</a></p>
+
+<p>I am not embedding the shadertoy here to avoid web browser crashes. So here’s a recording instead:</p>
+
+<video controls="controls" playsinline="playsinline" loop="" src="/uploads/2023/chemaguerra-taa-shadertoy.mp4" width="600" height="337" poster="/uploads/2023/chemaguerra-taa-shadertoy-poster.png" alt="" preload="none"></video>
+
+<p>From <a href="https://en.wikipedia.org/wiki/Temporal_anti-aliasing">Wikipedia</a>:</p>
+
+<p><em>“Temporal anti-aliasing (TAA) … combines information from past frames and the current frame to remove jaggies in the current frame. In TAA, each pixel is sampled once per frame but in each frame the sample is at a different location within the image. Pixels sampled in past frames are blended with pixels sampled in the current frame to produce an anti-aliased image.”</em></p>
+
+<p>I won’t get super-deep into the details here. Please take a look at my shadertoy implementation instead. But before that, feel free to enjoy these seminal TAA resources:</p>
+
+<ul>
+  <li><a href="https://www.youtube.com/watch?v=2XXS5UyNjjU">GDC/playdead/INSIDE/Lasse</a></li>
+  <li><a href="https://advances.realtimerendering.com/s2014/#_HIGH-QUALITY_TEMPORAL_SUPERSAMPLING">UE4/Karis</a></li>
+</ul>
+
+<p><img src="/uploads/2023/chemaguerra-taa-comparison.png" width="600" height="600" alt="" /></p>
+
+<h3 id="the-intuition-behind-temporal-aa">The intuition behind <em>Temporal</em> AA</h3>
+
+<p>Most AA solutions sample each frame pixel multiple times (randomizing the sampling, jittering the camera, etc…) and output the averaged samples to the display. A straightforward example of this is MSAA, where each rasterized pixel is exploded into <code class="language-plaintext highlighter-rouge">N</code> fragments that get scattered through the surface of the pixel. The eventual output is simply the average of those fragments.</p>
+
+<p>This means that each frame will take (potentially) <code class="language-plaintext highlighter-rouge">N</code> times longer to compute if AA is enabled.</p>
+
+<p>On the other hand, Temporal AA samples each frame pixel -only once- and then averages the information found in the past <code class="language-plaintext highlighter-rouge">N</code> frames to complete the current frame. This is achieved by <em>rewinding the current pixel back in time into the previous frame(s)</em> via perspective/motion reprojection.</p>
+
+<p>This sounds like the holy grail of AA, because we can’t expect to go lower than one sample per pixel. TAA is indeed remarkably fast, and delivers quality comparable to other classic AA solutions. As a matter of fact, TAA has become the de-facto standard in game engines, and is even the foundation of higher-order algorithms such as DLSS.</p>
+
+<p>However, implementation is tricky and finicky, and some requirements must be met by your engine before support for TAA can be added.</p>
+
+<h3 id="reprojection-into-the-previous-frame">Reprojection (into the previous frame)</h3>
+
+<p><em>Reprojection</em> means figuring out the location of a current frame pixel in the previous frame:</p>
+
+<ul>
+  <li>Do nothing if everything is completely static (trivial case).</li>
+  <li>If 1px shear jittering is used: Undo jittering from the current frame and do jittering in the previous frame. This will reconstruct proper AA in all contours pretty much like MSAA would.</li>
+  <li>If the camera is moving: Unproject the pixel to world space with the current frame’s camera projection and then reproject from world space with the previous frame’s camera projection.</li>
+  <li>If the objects are moving: Unproject the pixel, then subtract the motion vector corresponding to the object the pixel belongs to, and reproject with the previous frame’s camera projection.</li>
+</ul>
+
+<p>In the general case, all the above combined are needed.</p>
+
+<h3 id="blending-with-the-history-buffer">Blending with the history buffer</h3>
+
+<p>For TAA we will just make the output of the current frame become the history frame for the next frame.</p>
+
+<p>For the blending policy between current vs. history (reprojected) pixels we may use an <em>Exponential Moving Average</em>. As the weight used for blending <code class="language-plaintext highlighter-rouge">current':=lerp(weight,current,history)</code> becomes lower and lower, the EMA converges to an arithmetic average of the past (infinite) frames.</p>
+
+<p>This means <em>infinite storage in finite space</em>. Kind of…</p>
+
+<p>Note that this continuous blending of pixel colors may cause some degree of <em>smearing and ghosting</em> in the frame. Especially when objects become occluded/unoccluded, pop in/out of the frame, or when the camera is shaking vigorously.</p>
+
+<h3 id="reprojection-is-inherently-faulty">Reprojection is inherently faulty</h3>
+
+<p>Unfortunately, when a pixel is reprojected back in time the information we’re looking for may simply not be there. <em>i.e.,</em> the current pixel was occluded (or out of the screen) in the previous frame.</p>
+
+<p>Such situations can’t be avoided. So we need some policy to decide to what extent a reprojected pixel must be accepted or rejected.</p>
+
+<p>Some reasonable possibilities are: keeping track of object/material IDs per pixel, keeping track of abrupt changes in the pixel’s depth, etc… However besides the extra buffer readouts, these ideas prove to be generally ad-hoc and unreliable.</p>
+
+<p>A much simpler idea is to blend proportionally to the difference in color (or luminance). Which is simple enough and <em>kind of works</em>, but produces tons of motion smearing… until it is combined with <em>color clipping</em>.</p>
+
+<p>I believe that Sousa/Lottas/Karis (?) came up with a genius idea that is very stable, but also efficient and easy to implement without any extra pre-requisites:</p>
+
+<blockquote>
+  <p><em>clip the reprojected pixel color to the min-max color of the pixel’s neighborhood in the current frame</em>.</p>
+</blockquote>
+
+<p>The rationale here is that eventually (<em>e.g.,</em> when the camera stabilizies) each anti-aliased pixel will converge to a color that is a function of itself and its neighbors. So clipping the reprojected pixel in the history buffer to said min-max range ensures that highly different colors (<em>i.e.,</em> good candidates for rejection) won’t pull too hard from the current blend, while acceptable values (already within range) will blend peacefully.</p>
+
+<p>This works surprisingly well and, if implemented carefully, keeps flicker/smearing/ghosting to a minimum.</p>
+
+<h3 id="pre-requisites">Pre-requisites</h3>
+
+<p>All the above require from your engine:</p>
+
+<ul>
+  <li>A <code class="language-plaintext highlighter-rouge">WxH</code> history buffer. 1 color per pixel.</li>
+  <li>If objects are moving: A velocity buffer with 1 motion vector per pixel.</li>
+  <li>Recalling the camera projection and jittering used in the previous frame.</li>
+</ul>
+
+<p>Then, TAA becomes a one-pass full-frame pixel shader that reprojects/clips/weighs pixels as described.</p>
+
+<h3 id="bonuses">Bonuses</h3>
+
+<p>Since TAA averages pixel colors over time while being agnostic to how those colors came up to be, it <em>auto-magically</em> helps converge <em>every</em> effect that samples over time in the frame. <em>i.e.,</em> stochastic effects such as AO, volumetrics, etc…</p>
+
+<p>So it kind of doubles as Temporal AA and Temporal denoising. :-)</p>]]></content><author><name></name></author><category term="render" /><category term="math" /><category term="3d" /><category term="coding" /><summary type="html"><![CDATA[Recently I dived into the rabbit-hole of real-time anti-aliasing techniques and ended up implementing Reprojection-based Temporal Anti-Aliasing.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://brashandplucky.com/thumbnails/2023/chemaguerra-reprojection-temporal-antialiasing.png" /><media:content medium="image" url="https://brashandplucky.com/thumbnails/2023/chemaguerra-reprojection-temporal-antialiasing.png" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry><title type="html">Tiny path tracing in 2D</title><link href="http://localhost:4000/render/2d/physics/coding/2023/04/14/tiny-path-tracing.html" rel="alternate" type="text/html" title="Tiny path tracing in 2D" /><published>2023-04-14T05:46:42+02:00</published><updated>2023-04-14T05:46:42+02:00</updated><id>http://localhost:4000/render/2d/physics/coding/2023/04/14/tiny-path-tracing</id><content type="html" xml:base="http://localhost:4000/render/2d/physics/coding/2023/04/14/tiny-path-tracing.html"><![CDATA[<p>This is a tiny pixelshader-only 2D path tracing engine. In my (little) spare time I’ve been writing a small C++ videogame/real-time engine and am doing some little experiments from time to time.</p>
+
+<p>The fragment shader here does stochastic PT and NEE, and MIS to weigh both. The rays and scene obstacles are all in 2D (line segments and rectangles).</p>
+
+<p>The 2 moving cubes are controlled by a gamepad, and the third cube that shows up in the trajectory between one and the other is a collision-detection test using the classic AABB vs. swept AABB algorithm (<a href="https://en.wikipedia.org/wiki/Minkowski_addition">minkowski sum</a>, etc…).</p>
+
+<video controls="controls" playsinline="playsinline" loop="" src="/uploads/2023/chemaguerra-tiny-pt.mp4" width="600" height="600" poster="/uploads/2023/chemaguerra-tiny-pt.png" alt="" preload="none"></video>
+
+<p>Posted on my Twitter account for personal projects:</p>
+
+<p><a href="https://twitter.com/topotoygames/status/1647584758623289349">twitter.com/topotoygames #1</a>
+<a href="https://twitter.com/topotoygames/status/1646473620447809538">twitter.com/topotoygames #2</a>
+<a href="https://twitter.com/topotoygames/status/1644790986676002817">twitter.com/topotoygames #3</a></p>]]></content><author><name></name></author><category term="render" /><category term="2d" /><category term="physics" /><category term="coding" /><summary type="html"><![CDATA[This is a tiny pixelshader-only 2D path tracing engine. In my (little) spare time I’ve been writing a small C++ videogame/real-time engine and am doing some little experiments from time to time.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://brashandplucky.com/thumbnails/2023/chemaguerra-tiny-path-tracing.png" /><media:content medium="image" url="https://brashandplucky.com/thumbnails/2023/chemaguerra-tiny-path-tracing.png" xmlns:media="http://search.yahoo.com/mrss/" /></entry></feed>

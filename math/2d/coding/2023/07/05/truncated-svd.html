@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Truncated SVD | TopoToy Games</title>
+<meta name="generator" content="Jekyll v4.3.2" />
+<meta property="og:title" content="Truncated SVD" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="NOTE: This write-up is not finished yet…" />
+<meta property="og:description" content="NOTE: This write-up is not finished yet…" />
+<link rel="canonical" href="http://localhost:4000/math/2d/coding/2023/07/05/truncated-svd.html" />
+<meta property="og:url" content="http://localhost:4000/math/2d/coding/2023/07/05/truncated-svd.html" />
+<meta property="og:site_name" content="TopoToy Games" />
+<meta property="og:image" content="https://brashandplucky.com/thumbnails/2023/chemaguerra-truncated-svd.png" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2023-07-05T22:52:40+02:00" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta property="twitter:image" content="https://brashandplucky.com/thumbnails/2023/chemaguerra-truncated-svd.png" />
+<meta property="twitter:title" content="Truncated SVD" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2023-07-05T22:52:40+02:00","datePublished":"2023-07-05T22:52:40+02:00","description":"NOTE: This write-up is not finished yet…","headline":"Truncated SVD","image":"https://brashandplucky.com/thumbnails/2023/chemaguerra-truncated-svd.png","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/math/2d/coding/2023/07/05/truncated-svd.html"},"url":"http://localhost:4000/math/2d/coding/2023/07/05/truncated-svd.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="TopoToy Games" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">TopoToy Games</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Truncated SVD</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2023-07-05T22:52:40+02:00" itemprop="datePublished">Jul 5, 2023
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p>NOTE: This write-up is not finished yet…</p>
+
+<h3 id="pca">PCA</h3>
+
+<p>https://en.wikipedia.org/wiki/Principal_component_analysis</p>
+
+<p>This is accomplished by linearly transforming the data into a new coordinate system where (most of) the variation in the data can be described with fewer dimensions than the initial data.</p>
+
+<p>Without getting into the details, this is done via an eigen-decomposition of the <a href="https://en.wikipedia.org/wiki/Covariance_matrix">covariance matrix</a>.</p>
+
+<p><img src="/uploads/2023/chemaguerra-pca.gif" width="600" height="240" alt="" /></p>
+
+<h3 id="svd">SVD</h3>
+
+<p><em>Singular Value Decomposition</em> (<a href="https://en.wikipedia.org/wiki/Singular_value_decomposition">SVD</a>) is a matrix factorization technique that factors a real matrix <code class="language-plaintext highlighter-rouge">M</code> into three matrices <code class="language-plaintext highlighter-rouge">U</code>, <code class="language-plaintext highlighter-rouge">Σ</code>, and <code class="language-plaintext highlighter-rouge">V</code> such that <code class="language-plaintext highlighter-rouge">M=U*Σ*V_T</code>.</p>
+
+<p>If <code class="language-plaintext highlighter-rouge">M</code> is <code class="language-plaintext highlighter-rouge">mxn</code>, then <code class="language-plaintext highlighter-rouge">U</code> is <code class="language-plaintext highlighter-rouge">mxm</code>, <code class="language-plaintext highlighter-rouge">Σ</code> is <code class="language-plaintext highlighter-rouge">mxn</code> and <code class="language-plaintext highlighter-rouge">V</code> is <code class="language-plaintext highlighter-rouge">nxn</code>. Both <code class="language-plaintext highlighter-rouge">U</code> and <code class="language-plaintext highlighter-rouge">V</code> are orthonormal, and <code class="language-plaintext highlighter-rouge">Σ</code> is rectangular-diagonal with non-negative coefficients.</p>
+
+<p>This is very similar to PCA, excepting that the factorization for SVD is done on the data matrix, whereas for PCA, the factorization is done on the covariance matrix.</p>
+
+<p>The diagonal coefficients of S are known as the <em>singular values</em> of <code class="language-plaintext highlighter-rouge">M</code> and it is common practice to rearrange the SVD so the singular values are given in decreasing order. The number of non-zero singular values is equal to the rank of <code class="language-plaintext highlighter-rouge">M</code>.</p>
+
+<p>The SVD is tightly <a href="https://intoli.com/blog/pca-and-svd/">related to PCA</a>:</p>
+
+<ul>
+  <li>The columns of <code class="language-plaintext highlighter-rouge">V</code> are principal directions/axes (eigenvectors).</li>
+  <li>Columns of <code class="language-plaintext highlighter-rouge">U*Σ</code> are principal components (scores).</li>
+  <li>Singular values are related to the eigenvalues of the covariance matrix.</li>
+</ul>
+
+<p>From Wikipedia:</p>
+
+<p><img src="/uploads/2023/chemaguerra-svd-matrices.png" width="440" height="513" alt="" /></p>
+
+<h3 id="truncated-svd">Truncated SVD</h3>
+
+<p>Let’s try with a 1024x1024 grayscale image of the moon:</p>
+
+<p><img src="/uploads/2023/chemaguerra-moon.png" width="600" height="600" alt="" /></p>
+
+<p>Such an image can be interpreted as 1024 vectors of 1024 components each. <em>i.e.,</em> a set of 1024 vectors in a 1024-dimension space.</p>
+
+<p>If we run PCA/SVD on this set, the three matrices <code class="language-plaintext highlighter-rouge">U</code>, <code class="language-plaintext highlighter-rouge">Σ</code>, <code class="language-plaintext highlighter-rouge">V</code> will be 1024x1024. In particular, <code class="language-plaintext highlighter-rouge">Σ</code> will be a square-diagonal matrix. <em>i.e.,</em> only the coefficients in the diagonal are potentially non-zero. It is common practice to rearrange the three matrices so the diagonal indices in <code class="language-plaintext highlighter-rouge">Σ</code> are sorted from greater (top-left) to lower (bottom-right).</p>
+
+<p><em>Truncated SVD</em> is simply the act of zeroing-out all the coefficients in <code class="language-plaintext highlighter-rouge">Σ</code> except for the top-left <code class="language-plaintext highlighter-rouge">n</code> ones.</p>
+
+<p>Coefficient truncation implies that we’re also trashing <code class="language-plaintext highlighter-rouge">1024-n</code> columns in <code class="language-plaintext highlighter-rouge">U</code> and in <code class="language-plaintext highlighter-rouge">V</code> (as now those will be multiplied by 0 anyway).</p>
+
+<p>If we now reconstruct the original matrix <code class="language-plaintext highlighter-rouge">M'=U'*Σ'*V_T'</code> using the truncated matrices, we will obtain <code class="language-plaintext highlighter-rouge">M'</code>, which will resemble <code class="language-plaintext highlighter-rouge">M</code>. The fewer the coefficients that we drop, the more closely that <code class="language-plaintext highlighter-rouge">M'</code> will approximate <code class="language-plaintext highlighter-rouge">M</code>. But because of the information-preserving properties of PCA/SVD, keeping just a bunch of the topmost coefficients in <code class="language-plaintext highlighter-rouge">Σ</code> may suffice to restore all (or near all) the original information.</p>
+
+<h4 id="here-goes-a-demo">Here goes a demo</h4>
+
+<ul>
+  <li>The left half is the reconstructed matrix <code class="language-plaintext highlighter-rouge">M'</code>.</li>
+  <li>The right half is the reconstruction error <code class="language-plaintext highlighter-rouge">abs(M-M')</code>.</li>
+  <li>The decreasing yellow graph is the MSE as fewer and fewer singular values are zeroed-out.</li>
+</ul>
+
+<p><img src="/uploads/2023/chemaguerra-moon-svd.jpg" width="600" height="300" alt="" /></p>
+
+<p>This screenshot is <code class="language-plaintext highlighter-rouge">M'</code> reconstructed with only 32 (out of 1024) components.  <em>Right click + Open in new tab</em> for 1:1 quality.</p>
+
+<p>Below is a video with the same image pair as more and more components are used for reconstruction. Most of the action happens in the first few frames.</p>
+
+<div class="embed-container">
+    <iframe width="640" height="390" src="https://www.youtube.com/embed/6kzaotZlEWo" frameborder="0" allowfullscreen=""></iframe>
+</div>
+<style>
+.embed-container {
+  position: relative;
+  padding-bottom: 56.25%;
+  height: 0;
+  overflow: hidden;
+  max-width: 100%;
+}
+.embed-container iframe,
+.embed-container object,
+.embed-container embed {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+</style>
+
+<p><br /></p>
+
+<p>What’s remarkable here (the magic of PCA/SVD) is how quickly the error graph decreases. This proves that the first components capture most of the information present in <code class="language-plaintext highlighter-rouge">M</code>, while the trailing components only carry high-frequency/low-amplitude fine details.</p>
+
+<p>This is reminiscent of what happens with the Fourier Transform, the Cosine/Sine Transform and such. Those transforms deal with the space vs. frequency duality, whereas PCA/SVD is purely a variance-driven change-of-basis. But in a similar fashion, all these methods transform information to a dual form where the “amount of information” emerges in a structured, manageable way.</p>
+
+<p>The FT/CT/etc… lie at the foundation of <em>.jpeg</em>, <em>.mp3</em> and other compression systems which exploit the fact that the Human Perception System is more sensitive to luminance (vs. chromaticity), and to lower (vs. higher) frequencies.</p>
+
+<p>In the case of SVD/PCA, the upper coefficients in <code class="language-plaintext highlighter-rouge">Σ</code> capture more data variance than the lower ones.</p>
+
+<p><img src="/uploads/2023/chemaguerra-moon-sequence.png" width="600" height="200" alt="" /></p>
+
+<p>These sequences are reconstructions with 2, 4, 8, 16, 32, 64, and 128 coefficients.</p>
+
+<p><img src="/uploads/2023/chemaguerra-boi-sequence.png" width="600" height="200" alt="" /></p>
+
+<div class="embed-container">
+    <iframe width="640" height="390" src="https://www.youtube.com/embed/dOujW5C-A2A" frameborder="0" allowfullscreen=""></iframe>
+</div>
+<style>
+.embed-container {
+  position: relative;
+  padding-bottom: 56.25%;
+  height: 0;
+  overflow: hidden;
+  max-width: 100%;
+}
+.embed-container iframe,
+.embed-container object,
+.embed-container embed {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+</style>
+
+<p><br /></p>
+
+<h3 id="easier-vs-harder-cases">Easier vs. harder cases</h3>
+
+<p>As explained above, the matrix factorization can be interpreted as a change of basis to a special space where the data has rows which are linearly dependent with each other. In such case, <code class="language-plaintext highlighter-rouge">U/V</code> matrices of a lower rank will suffice to reconstruct the original matrix exactly. Actually, <code class="language-plaintext highlighter-rouge">Σ</code> will present itself with as many zero-valued coefficients in its diagonal as rows/columns can be trashed without causing any loss of data.</p>
+
+<p>An extreme case is presented below (a centered square box shape), where 1 coefficient/row/col suffices. In this case both inside and outside the shape, all rows/cols are identical. A box is a separable convolution filter, BTW (future post on low-rank convolution incoming, I hope).</p>
+
+<p><img src="/uploads/2023/chemaguerra-rect-sequence.png" width="600" height="200" alt="" /></p>
+
+<p>Rotating the shape brings disaster despite PCA/SVD are capable of “auto-detecting” such changes of basis. But here we’re dealing with discrete math, so the rotated shape gets “pixelated” and this makes the decomposition become numerically impure.</p>
+
+<p>It’s funny to see how in the first frames of the video the reconstruction “insists” on being an unrotated square, somehow.</p>
+
+<p><img src="/uploads/2023/chemaguerra-tilt-sequence.png" width="600" height="200" alt="" /></p>
+
+<video controls="controls" playsinline="playsinline" loop="" src="/uploads/2023/chemaguerra-tilt-256.mp4" width="600" height="300" poster="/uploads/2023/chemaguerra-tilt-poster.png" alt="" preload="none"></video>
+
+<p>Below, a pentagonal shape.</p>
+
+<p><img src="/uploads/2023/chemaguerra-penta-sequence.png" width="600" height="200" alt="" /></p>
+
+<video controls="controls" playsinline="playsinline" loop="" src="/uploads/2023/chemaguerra-penta-256.mp4" width="600" height="300" poster="/uploads/2023/chemaguerra-penta-poster.png" alt="" preload="none"></video>
+
+<h3 id="practical-uses">Practical uses</h3>
+
+<p>There are interesting practical uses for SVD truncation other than dimensionality reduction in data analysis.</p>
+
+<h4 id="data-compression">Data compression</h4>
+
+<p><a href="https://bartwronski.com/2020/05/21/dimensionality-reduction-for-image-and-texture-set-compression/">Bart Wronski</a> has a very interesting write up on <em>compression of PBR texture sets</em> using this technique.</p>
+
+<p><em>BCn Texture Compression</em> is based on dimensionality reduction as well. Nice write up on the subject by <a href="https://www.reedbeta.com/blog/understanding-bcn-texture-compression-formats/">Nathan Reed</a>.</p>
+
+<h4 id="low-rank-approximation">Low-rank approximation</h4>
+
+<p>(Low-rank approximation)[https://en.wikipedia.org/wiki/Low-rank_approximation].</p>
+
+<p>Another interesting read by <a href="https://bartwronski.com/2020/02/03/separate-your-filters-svd-and-low-rank-approximation-of-image-filters/">Bart Wronski</a>. I wish to do my own write up on <em>low-rank convolution</em> soon.</p>
+
+<h3 id="implementation-details">Implementation details</h3>
+
+<p>I had some old PCA/SVD C++ code in <a href="https://maverickrender.com/">Maverick</a>’s API, which I used for the images/videos in this post. But after reading this post by <a href="https://blog.demofox.org/2022/07/12/calculating-svd-and-pca-in-c/">Atrix256</a> I may bite the bullet and replace the implementation part of my old <code class="language-plaintext highlighter-rouge">xsvd_c</code> class with <a href="https://eigen.tuxfamily.org/">Eigen</a>.</p>
+
+  </div><a class="u-url" href="/math/2d/coding/2023/07/05/truncated-svd.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">TopoToy Games</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">TopoToy Games</li><li><a class="u-email" href="mailto:topotoy.games@gmail.com">topotoy.games@gmail.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/topotoy"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg> <span class="username">topotoy</span></a></li><li><a href="https://www.twitter.com/topotoygames"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#twitter"></use></svg> <span class="username">topotoygames</span></a></li></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>This is a coding blog where I post now and then about the various projects that I am currently working on, both at work, or as an independent researcher. Most content here revolves around computer graphics and physics simulation.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
